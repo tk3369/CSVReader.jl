@@ -68,19 +68,19 @@ function get_sample_lines(filename; headers = true, max_reach_pct = 0.1, samples
     L_upper = floor(Int, L * max_reach_pct)   # don't read lines further than this
     L_lower = headers ? 2 : 1
     num_samples = floor(Int, L_upper * samples_pct)
-    L_samples = unique(sort(rand(L_lower:L_upper, num_samples)))
+    samples = unique(sort(rand(L_lower:L_upper, num_samples)))
     # @info "There are approximately $L lines in the file"
-    # @info "Taking $(length(L_samples)) samples between L$(L_lower) and L$(L_upper)"
+    # @info "Taking $(length(samples)) samples between L$(L_lower) and L$(L_upper)"
     n = 1
     i = 1
     lines = String[]
     open(filename) do f
         while !eof(f)
             line = readline(f)
-            if n == L_samples[i]   # take sample
+            if n == samples[i]   # take sample
                 push!(lines, line)
                 i += 1
-                i > length(L_samples) && break
+                i > length(samples) && break
             end
             n += 1
         end
