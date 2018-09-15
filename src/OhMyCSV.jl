@@ -5,8 +5,8 @@ using DataFrames: DataFrame
 parse_float64(s::AbstractString) = length(s) == 0 ? Missing : parse(Float64, s)
 parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
 
-parse_float64_nan(s::AbstractString) = length(s) == 0 ? NaN : parse(Float64, s)
-parser_return_type(::Val{parse_float64_nan}) = Float64
+parse_int(s::AbstractString) = length(s) == 0 ? Missing : parse(Int, s)
+parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 
 parse_string(s::AbstractString) = s
 parser_return_type(::Val{parse_string}) = AbstractString
@@ -14,48 +14,105 @@ parser_return_type(::Val{parse_string}) = AbstractString
 """
 Read CSV file
 """
-function read(filename, parsers)
-    (headers, lines) = read_file(filename)
-    
-    # pre-allocate column arrays
-    rows = length(lines)
-    types = parser_return_type.(Val.(parsers))
-    data = [Vector{T}(undef, rows) for T ∈ types]
-    
-    # loop
-    row = 1
-    #println("There are ", length(lines), " lines")
-    for line in lines
-        j = firstindex(line)
-        col = 1
-        @inbounds for (i,c) ∈ enumerate(line)
-            if c == ','
-                cell = strip(line[j:i-1], '"')
-                data[col][row] = parsers[col](cell)
-                j = i+1   # reset last index
-                col += 1
-            end
+function read(filename, parsers; headers = true, delimiter = ",", nrows = 0)  
+    open(filename) do f
+        hdr = read_headers(f, headers, delimiter)
+        lines = nrows == 0 ? [] : Vector(undef, nrows)
+        r = 0
+        while !eof(f)
+            line = readline(f)
+            row = map(x -> x[1](x[2]), zip(parsers, split(line, delimiter)))
+            r += 1
+            nrows == 0 ? push!(lines, row) : lines[r] = row
         end
-        if j < lastindex(line)
-            cell = strip(line[j:end], '"')
-            data[col][row] = parsers[col](cell)
-        end
-        row += 1
+        c = length(hdr)
+        n = length(lines)
+        DataFrame([[L[j] for L in lines] for j in 1:c], Symbol.(hdr))
     end
-    DataFrame(data, headers)
 end
 
-# read whole file into memory
-function read_file(filename)
+function read_file(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
+    parsers = infer_parsers(filename, headers, delimiter, quotechar)
+    read(filename, parsers, headers = headers, delimiter = delimiter, nrows = nrows)
+end
+
+function read_headers(f, with_headers, delimiter)
+    if with_headers
+        split(readline(f), delimiter)
+    else
+        ["_$i" for i in 1:c]
+    end
+end
+
+function infer_parsers(filename, headers, delimiter, quotechar)
+    sample_lines = get_sample_lines(filename, headers = headers)
+    for line in sample_lines
+        cells = strip.(split(line, delimiter), quotechar)
+        return infer_parser.(cells)  # TODO look beyond first line
+    end
+end
+
+# infer parser needed from a string
+function infer_parser(s)
+    if match(r"^\d+\.\d*$", s) != nothing ||      # covers 12.
+            match(r"^\d*\.\d+$", s)!= nothing     # covers .12
+        parse_float64
+    elseif match(r"^\d+$", s) != nothing          # covers 123
+        parse_int
+    else
+        parse_string
+    end
+end
+
+# get some sample lines
+function get_sample_lines(filename; headers = true, max_reach_pct = 0.1, samples_pct = 0.3)
+    L = estimate_lines_in_file(filename)
+    L_upper = floor(Int, L * max_reach_pct)   # don't read lines further than this
+    L_lower = headers ? 2 : 1
+    num_samples = floor(Int, L_upper * samples_pct)
+    L_samples = unique(sort(rand(L_lower:L_upper, num_samples)))
+    # @info "There are approximately $L lines in the file"
+    # @info "Taking $(length(L_samples)) samples between L$(L_lower) and L$(L_upper)"
+    n = 1
+    i = 1
     lines = String[]
     open(filename) do f
-        global hdr = Symbol.(split(readline(f), ","))
         while !eof(f)
-            push!(lines, readline(f))
+            line = readline(f)
+            if n == L_samples[i]   # take sample
+                push!(lines, line)
+                i += 1
+                i > length(L_samples) && break
+            end
+            n += 1
         end
     end
-    (headers=hdr, lines=lines)
+    lines
 end
 
+function estimate_lines_in_file(filename; line_length_samples = 10, with_headers = true)
+    s = filesize(filename)
+    open(filename) do f
+        with_headers && readline(f)  # skip header
+        L =  estimate_line_length(f, line_length_samples)
+        s ÷ L
+    end
+end
+
+function estimate_line_length(f, line_length_samples)
+    few_lines = read_first_few_lines(f, line_length_samples)
+    sum(length, few_lines) ÷ length(few_lines)
+end
+
+function read_first_few_lines(f, lines_to_read)
+    lines = []
+    count = 0
+    while !eof(f) && count < lines_to_read
+        push!(lines, readline(f))
+        count += 1
+    end
+    lines
+end
 
 end # module
+
