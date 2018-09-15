@@ -3,14 +3,30 @@ module OhMyCSV
 using DataFrames: DataFrame
 
 # Parsers
-parse_float64(s::AbstractString) = length(s) == 0 || s[1] == '.' ? Missing : parse(Float64, s)
-parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
-
-parse_int(s::AbstractString) = length(s) == 0 ? Missing : parse(Int, s)
-parser_return_type(::Val{parse_int}) = Union{Int, Missing}
-
 parse_string(s::AbstractString) = s
 parser_return_type(::Val{parse_string}) = AbstractString
+
+parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
+parse_float64(s::AbstractString) = if length(s) == 0
+    Missing
+elseif s[1] == '.' 
+    zero(Float64)
+else
+    try parse(Float64, s) catch; Missing end
+end
+
+# Int parser handles float values in case of surprises
+parser_return_type(::Val{parse_int}) = Union{Int, Float64, Missing}
+parse_int(s::AbstractString) = if length(s) == 0
+    Missing
+else
+    x = try 
+        parse(Int, s)
+    catch
+        try parse(Float64, s) catch; Missing end
+    end
+    x
+end
 
 function read_csv(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
     parsers = infer_parsers(filename, headers, delimiter, quotechar)
