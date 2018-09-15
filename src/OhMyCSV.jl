@@ -12,6 +12,11 @@ parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 parse_string(s::AbstractString) = s
 parser_return_type(::Val{parse_string}) = AbstractString
 
+function read_csv(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
+    parsers = infer_parsers(filename, headers, delimiter, quotechar)
+    read_csv_with_parsers(filename, parsers, headers = headers, delimiter = delimiter, nrows = nrows)
+end
+
 function read_csv_with_parsers(filename, parsers; headers = true, delimiter = ",", nrows = 0)  
     open(filename) do f
         hdr = read_headers(f, headers, delimiter)
@@ -27,11 +32,6 @@ function read_csv_with_parsers(filename, parsers; headers = true, delimiter = ",
         n = length(lines)
         DataFrame([[L[j] for L in lines] for j in 1:c], Symbol.(hdr))
     end
-end
-
-function read_csv(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
-    parsers = infer_parsers(filename, headers, delimiter, quotechar)
-    read_csv_with_parsers(filename, parsers, headers = headers, delimiter = delimiter, nrows = nrows)
 end
 
 function read_headers(f, with_headers, delimiter)
