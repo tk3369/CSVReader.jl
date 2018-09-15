@@ -2,7 +2,8 @@ module OhMyCSV
 
 using DataFrames: DataFrame
 
-parse_float64(s::AbstractString) = length(s) == 0 ? Missing : parse(Float64, s)
+# Parsers
+parse_float64(s::AbstractString) = length(s) == 0 || s[1] == '.' ? Missing : parse(Float64, s)
 parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
 
 parse_int(s::AbstractString) = length(s) == 0 ? Missing : parse(Int, s)
@@ -11,10 +12,7 @@ parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 parse_string(s::AbstractString) = s
 parser_return_type(::Val{parse_string}) = AbstractString
 
-"""
-Read CSV file
-"""
-function read(filename, parsers; headers = true, delimiter = ",", nrows = 0)  
+function read_csv_with_parsers(filename, parsers; headers = true, delimiter = ",", nrows = 0)  
     open(filename) do f
         hdr = read_headers(f, headers, delimiter)
         lines = nrows == 0 ? [] : Vector(undef, nrows)
@@ -31,9 +29,9 @@ function read(filename, parsers; headers = true, delimiter = ",", nrows = 0)
     end
 end
 
-function read_file(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
+function read_csv(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
     parsers = infer_parsers(filename, headers, delimiter, quotechar)
-    read(filename, parsers, headers = headers, delimiter = delimiter, nrows = nrows)
+    read_csv_with_parsers(filename, parsers, headers = headers, delimiter = delimiter, nrows = nrows)
 end
 
 function read_headers(f, with_headers, delimiter)
