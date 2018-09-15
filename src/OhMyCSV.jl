@@ -1,32 +1,21 @@
 module OhMyCSV
 
 using DataFrames: DataFrame
+using InternedStrings
+using Parsers
 
 # Parsers
-parse_string(s::AbstractString) = s
+parse_string(s::AbstractString) = intern(s)
 parser_return_type(::Val{parse_string}) = AbstractString
 
+parse_float64(s::AbstractString) = something(Parsers.tryparse(s, Float64), Missing)
 parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
-parse_float64(s::AbstractString) = if length(s) == 0
-    Missing
-elseif s[1] == '.' 
-    zero(Float64)
-else
-    try parse(Float64, s) catch; Missing end
-end
 
 # Int parser handles float values in case of surprises
-parser_return_type(::Val{parse_int}) = Union{Int, Float64, Missing}
-parse_int(s::AbstractString) = if length(s) == 0
-    Missing
-else
-    x = try 
-        parse(Int, s)
-    catch
-        try parse(Float64, s) catch; Missing end
-    end
-    x
+parse_int(s::AbstractString) = let s = intern(s) 
+    something(Parsers.tryparse(s, Int), Parsers.tryparse(s, Float64), Missing)
 end
+parser_return_type(::Val{parse_int}) = Union{Int, Float64, Missing}
 
 function read_csv(filename; headers = true, delimiter = ",", quotechar = '"', nrows = 0)
     parsers = infer_parsers(filename, headers, delimiter, quotechar)
@@ -46,7 +35,8 @@ function read_csv_with_parsers(filename, parsers; headers = true, delimiter = ",
         end
         c = length(hdr)
         n = length(lines)
-        DataFrame([[L[j] for L in lines] for j in 1:c], Symbol.(hdr))
+        #DataFrame([[L[j] for L in lines] for j in 1:c], Symbol.(hdr))
+        lines
     end
 end
 
@@ -79,14 +69,14 @@ function infer_parser(s)
 end
 
 # get some sample lines
-function get_sample_lines(filename; headers = true, max_reach_pct = 0.1, samples_pct = 0.3)
+function get_sample_lines(filename; headers = true, max_reach_pct = 0.1, samples_pct = 0.1, max_samples = 10)
     L = estimate_lines_in_file(filename)
     L_upper = floor(Int, L * max_reach_pct)   # don't read lines further than this
     L_lower = headers ? 2 : 1
-    num_samples = floor(Int, L_upper * samples_pct)
+    num_samples = min(max_samples, floor(Int, L_upper * samples_pct))
+    @info "There are approximately $L lines in the file"
+    @info "Taking at most $(num_samples) samples between L$(L_lower) and L$(L_upper)"
     samples = unique(sort(rand(L_lower:L_upper, num_samples)))
-    # @info "There are approximately $L lines in the file"
-    # @info "Taking $(length(samples)) samples between L$(L_lower) and L$(L_upper)"
     n = 1
     i = 1
     lines = String[]
@@ -109,20 +99,27 @@ function estimate_lines_in_file(filename; line_length_samples = 10, with_headers
     open(filename) do f
         with_headers && readline(f)  # skip header
         L =  estimate_line_length(f, line_length_samples)
-        s ÷ L
+        L > 0 ? s ÷ L : 0
     end
 end
 
 function estimate_line_length(f, line_length_samples)
     few_lines = read_first_few_lines(f, line_length_samples)
-    sum(length, few_lines) ÷ length(few_lines)
+    #println(few_lines)
+    if length(few_lines) > 0
+        sum(length, few_lines) ÷ length(few_lines)
+    else
+        0
+    end
 end
 
 function read_first_few_lines(f, lines_to_read)
     lines = []
     count = 0
     while !eof(f) && count < lines_to_read
-        push!(lines, readline(f))
+        line = readline(f)
+#        @show line
+        push!(lines, line)
         count += 1
     end
     lines
