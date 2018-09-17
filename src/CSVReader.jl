@@ -1,4 +1,4 @@
-module OhMyCSV
+module CSVReader
 
 using DataFrames: DataFrame, AbstractDataFrame, nrow
 using InternedStrings
