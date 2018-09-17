@@ -1,6 +1,7 @@
 # CSVReader
 
 This is a very simple CSV reader that performs well for small/medium files.
+
 Requires Julia 0.7/1.0.
 
 ## Installation
@@ -40,4 +41,51 @@ julia> @time CSVReader.read_csv("random_1000_1000.csv")
 │ 998  │ 0.807506  │ 0.662694  │ 0.748511   │ 0.386424  │ 0.382528  │ 0.967563  │ 0.289772  │ 0.68869   │
 │ 999  │ 0.766858  │ 0.188568  │ 0.00351197 │ 0.574412  │ 0.273609  │ 0.342067  │ 0.551695  │ 0.862752  │
 │ 1000 │ 0.0415403 │ 0.803243  │ 0.760925   │ 0.833656  │ 0.327847  │ 0.811386  │ 0.484366  │ 0.632995  │
+```
+
+By default, the reader tries to infer column types by looking at the first row.  Of course, that's not
+very accurate if you have any missing data or mixed number/string columns.  For now, it may be easier 
+to just specify the column parsers.
+
+There are few predefined parsers, represented as "f", "s", or "i".  
+You can use the `parsers` literal string to create an array of parsers.
+```
+julia> parsers"f,s,i"
+3-element Array{Function,1}:
+ CSVReader.parse_float64
+ CSVReader.parse_string 
+ CSVReader.parse_int    
+```
+
+Here's how:
+```
+julia> df = CSVReader.read_csv("FL_insurance_sample.csv", parsers"i,s,s,f,f,f,f,f,f,f,f,f,i,f,f,s,s,i");
+
+julia> describe(df)
+18×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable           │ mean      │ min            │ median    │ max               │ nunique │
+├─────┼────────────────────┼───────────┼────────────────┼───────────┼───────────────────┼─────────┤
+│ 1   │ policyID           │ 5.48662e5 │ 100074         │ 548525.0  │ 999971            │         │
+│ 2   │ statecode          │           │ FL             │           │ FL                │ 1       │
+│ 3   │ county             │           │ ALACHUA COUNTY │           │ WASHINGTON COUNTY │ 67      │
+│ 4   │ eq_site_limit      │ 731478.0  │ 0.0            │ 0.0       │ 2.16e9            │         │
+│ 5   │ hu_site_limit      │ 2.07435e6 │ 0.0            │ 1.92691e5 │ 2.16e9            │         │
+│ 6   │ fl_site_limit      │ 6.64601e5 │ 0.0            │ 0.0       │ 2.16e9            │         │
+│ 7   │ fr_site_limit      │ 9.91172e5 │ 0.0            │ 0.0       │ 2.16e9            │         │
+│ 8   │ tiv_2011           │ 2.17288e6 │ 90.0           │ 2.02105e5 │ 2.16e9            │         │
+│ 9   │ tiv_2012           │ 2.571e6   │ 73.37          │ 241631.0  │ 1.701e9           │         │
+│ 10  │ eq_site_deductible │ 778.791   │ 0.0            │ 0.0       │ 6.27377e6         │         │
+│ 11  │ hu_site_deductible │ 7037.98   │ 0.0            │ 0.0       │ 7.38e6            │         │
+│ 12  │ fl_site_deductible │ 192.453   │ 0.0            │ 0.0       │ 450000.0          │         │
+│ 13  │ fr_site_deductible │ 26.4836   │ 0              │ 0.0       │ 900000            │         │
+│ 14  │ point_latitude     │ 28.0875   │ 24.5475        │ 28.0571   │ 30.9898           │         │
+│ 15  │ point_longitude    │ -81.9036  │ -87.4473       │ -81.5857  │ -80.0333          │         │
+│ 16  │ line               │           │ Commercial     │           │ Residential       │ 2       │
+│ 17  │ construction       │           │ Masonry        │           │ Wood              │ 5       │
+│ 18  │ point_granularity  │ 1.64091   │ 1              │ 1.0       │ 7                 │         │
+```
+
+If there are many columns, you can create your own array of parsers as such.
+```
+CSVReader.read_csv("random_1000_1000.csv", fill(CSVReader.parse_float64, 1000));
 ```
