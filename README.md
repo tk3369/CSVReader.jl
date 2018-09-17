@@ -1,6 +1,7 @@
 # CSVReader
 
 This is a very simple CSV reader that performs well for small/medium files.
+
 Requires Julia 0.7/1.0.
 
 ## Installation
