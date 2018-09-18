@@ -91,5 +91,7 @@ julia> describe(df)
 ## To-Do
 
 [ ] Handle quoted numeric cells that contains comma separator
+
 [ ] Infer column types by reading more rows 
+
 [ ] Add unit tests
