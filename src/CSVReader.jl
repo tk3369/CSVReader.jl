@@ -23,11 +23,30 @@ parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
 parse_int(s) = something(mytryparse(s, Int), missing)
 parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 
-# Easy way to get parsers
-const parser_dict = Dict("i" => parse_int, "f" => parse_float64, "s" => parse_string)
-get_parsers(s::AbstractString) = [parser_dict[p] for p in split(s, ",")]
-#repeat_parsers(s::AbstractString, r::Integer) = join(fill(s, r), ",")
-macro parsers_str(s) get_parsers(s) end
+"""
+Construct parsers from a parser spec string.  The string contains a
+comman separated value of the format <parser>:<length>.  For example,
+s:10,f:2,i:5 means 10 strings, 2 floats, and 5 int's.
+"""
+macro parsers_str(s) 
+    parser_dict = Dict("i" => parse_int, "f" => parse_float64, "s" => parse_string)
+    sep = ":"
+    parsers = []
+    for spec in split(s, ",")
+        if occursin(sep, spec)
+            T, L = split(spec, sep)     # f:10 => means 10 floats
+            N = mytryparse(L, Int)
+            !haskey(parser_dict, T) && error("Invalid parser spec: $spec (unknown parser '$T')")
+            (N == nothing || N <= 0) && error("Invalid parser spec: $spec (bad length '$N')")
+            parsers = vcat(parsers, fill(parser_dict[T], N))
+        else
+            T = spec
+            !haskey(parser_dict, T) && error("Invalid parser spec: $spec (unknown parser)")
+            push!(parsers, parser_dict[T])
+        end
+    end
+    parsers
+end
 
 """
 Read CSV file
@@ -94,32 +113,6 @@ function parse_line!(df, row, parsers, line, delimiter)
     nothing
 end
 
-# ** This is only slightly faster... not worth the maintenance effort.
-# function parse_line!(df, row, parsers, line, delimiter)
-#     i = 1   # char position
-#     j = 1   # last char position
-#     k = 1   # column number
-#     L = length(line)
-#     @inbounds for c ∈ line
-#         if c == ','
-#             if j == i 
-#                 df[row,k] = missing
-#             else
-#                 df[row,k] = parsers[k](line[j:i-1])
-#             end
-#             k += 1          # next field
-#             j = i + 1       # remember next start position
-#         end
-#         i += 1
-#     end
-#     if j <= L
-#         df[row,k] = parsers[k](line[j:end])
-#     else
-#         df[row,k] = missing
-#     end
-#     nothing
-# end
-
 # Make a new DataFrame
 function make_dataframe(headers, types, rows)
     # @info "Making table with $rows rows"
@@ -148,7 +141,7 @@ function infer_parsers(filename, headers, delimiter, quotechar)
     open(filename) do f
         headers && readline(f)
         first_line = readline(f)
-        cells = strip.(split(first_line, delimiter), quotechar)
+        cells = strip.(split(first_line, delimiter), Ref(quotechar))
         infer_parser.(cells) 
     end
 end
@@ -156,7 +149,7 @@ end
 function infer_parsers_old(filename, headers, delimiter, quotechar)
     sample_lines = get_sample_lines(filename, headers = headers)
     for line in sample_lines
-        cells = strip.(split(line, delimiter), quotechar)
+        cells = strip.(split(line, delimiter), Ref(quotechar))
         return infer_parser.(cells)  # TODO look beyond first line
     end
 end
