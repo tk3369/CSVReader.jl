@@ -213,7 +213,7 @@ function estimate_line_length(f, line_length_samples)
 end
 
 function read_first_few_lines(f, lines_to_read)
-    lines = []
+    lines = String[]
     count = 0
     while !eof(f) && count < lines_to_read
         line = readline(f)
