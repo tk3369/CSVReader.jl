@@ -10,11 +10,11 @@ Requires Julia 0.7/1.0.
 
 `] add https://github.com/tk3369/CSVReader.jl`
 
-## Usage
+## Manual
+
+### Basic Usage
 
 ```
-julia> using CSVReader
-
 shell> ls -l random_1000_1000.csv
 -rw-r--r--  1 tomkwong  staff  19277409 Sep 15 09:42 random_1000_1000.csv
 
@@ -25,6 +25,8 @@ jjulia> @btime CSVReader.read_csv("/Users/tomkwong/Downloads/random_1000_1000.cs
 By default, the reader tries to infer column types by looking at the first row.  Of course, that's not
 very accurate if you have any missing data or mixed number/string columns.  For now, it may be easier 
 to just specify the column parsers.
+
+### Specify Your Own Column Types 
 
 There are few predefined parsers, represented as "f", "s", or "i".  
 You can use the `parsers` literal string to create an array of parsers.
@@ -39,7 +41,7 @@ julia> parsers"f,s,i,f:2"
  CSVReader.parse_float64    
 ```
 
-How do you use it?
+So how do you use it?
 ```
 julia> df = CSVReader.read_csv("FL_insurance_sample.csv", parsers"i,s:2,f:11,s:2,i");
 
