@@ -8,7 +8,7 @@ Requires Julia 0.7/1.0.
 
 ## Installation
 
-`] add https://github.com/tk3369/CSVReader.jl.git`
+`] add https://github.com/tk3369/CSVReader.jl`
 
 ## Usage
 
