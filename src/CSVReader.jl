@@ -223,7 +223,7 @@ function read_first_few_lines(f, lines_to_read)
     lines
 end
 
-function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip = true)
+function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip_quotes = true)
     within_quote = false
     last_index = 1
     values = String[]
@@ -244,7 +244,7 @@ function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::
     if last_index <= length(str) || str[end] == delimiter
         push!(values, str[last_index:end])
     end
-    strip ? [strip(x, [quotechar, ' ']) for x in values] : values
+    strip_quotes ? [strip(x, [quotechar, ' ']) for x in values] : values
 end
 
 end # module
