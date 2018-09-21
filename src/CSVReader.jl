@@ -223,7 +223,7 @@ function read_first_few_lines(f, lines_to_read)
     lines
 end
 
-function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip = false)
+function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip = true)
     within_quote = false
     last_index = 1
     values = String[]
