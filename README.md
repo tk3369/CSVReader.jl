@@ -4,7 +4,10 @@ This is a very simple CSV reader that performs well for small/medium files.
 It does not have any bells and whistles.  It should work fine if the file
 is well formatted and free of errors.
 
-Requires Julia 0.7/1.0.
+Check out [CSV.jl](https://github.com/JuliaData/CSV.jl) for more flexibility
+and better performance for large files.
+
+Requires Julia 1.0.
 
 ## Installation
 
