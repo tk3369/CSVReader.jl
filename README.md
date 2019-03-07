@@ -81,4 +81,5 @@ julia> describe(df)
 - [x] Handle quoted numeric cells that contains comma separator
 - [x] Add unit tests
 - [ ] Infer column types by reading more rows 
+- [ ] Multi-threading for reading large files
 
