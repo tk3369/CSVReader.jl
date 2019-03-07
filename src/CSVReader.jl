@@ -141,14 +141,6 @@ function infer_parsers(filename, headers, delimiter, quotechar)
     end
 end
 
-function infer_parsers_old(filename, headers, delimiter, quotechar)
-    sample_lines = get_sample_lines(filename, headers = headers)
-    for line ∈ sample_lines
-        cells = mysplit(line, delimiter = delimiter, quotechar = quotechar)
-        return infer_parser.(cells)  # TODO look beyond first line
-    end
-end
-
 # infer parser needed from a string
 function infer_parser(s)
     if match(r"^\d+\.\d*$", s) != nothing ||      # covers 12.
