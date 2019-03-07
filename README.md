@@ -1,10 +1,14 @@
 # CSVReader
 
-This is a very simple CSV reader that performs well for small/medium-sized files.
-It does not have any bells and whistles.  It should work fine if the file
-is well formatted and free of errors.
+[![Build Status](https://travis-ci.org/tk3369/CSVReader.jl.svg?branch=master)](https://travis-ci.org/tk3369/CSVReader.jl)
+[![codecov](https://codecov.io/gh/tk3369/CSVReader.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tk3369/CSVReader.jl)
+[![Coverage Status](https://coveralls.io/repos/github/tk3369/CSVReader.jl/badge.svg?branch=master)](https://coveralls.io/github/tk3369/CSVReader.jl?branch=master)
 
-Check out [CSV.jl](https://github.com/JuliaData/CSV.jl) for more flexibility
+This is a simple CSV reader that performs well and is easy to use.
+It does not have any bells and whistles.
+It should work fine if the file is well formatted and free of errors.
+
+Check out [CSV.jl](https://github.com/JuliaData/CSV.jl) if you need more features
 and better performance for large files.
 
 Requires Julia 1.0.
@@ -77,4 +81,5 @@ julia> describe(df)
 - [x] Handle quoted numeric cells that contains comma separator
 - [x] Add unit tests
 - [ ] Infer column types by reading more rows 
+- [ ] Multi-threading for reading large files
 
