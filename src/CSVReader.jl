@@ -1,26 +1,19 @@
 module CSVReader
 
 using DataFrames: DataFrame, AbstractDataFrame, nrow
-using InternedStrings
-using Parsers
+using InternedStrings: intern
+using Parsers: tryparse
 
 export @parsers_str
-
-# Parsers addition to support AbstractString
-# See https://github.com/JuliaData/Parsers.jl/issues/6
-function mytryparse(str::AbstractString, ::Type{T}; kwargs...) where {T}
-    res = Parsers.parse(Parsers.defaultparser, IOBuffer(str), T; kwargs...)
-    return Parsers.ok(res.code) ? res.result : nothing
-end
 
 # Parsers
 parse_string(s) = intern(s)
 parser_return_type(::Val{parse_string}) = Union{String, Missing}
 
-parse_float64(s::AbstractString) = something(mytryparse(s, Float64), missing)
+parse_float64(s::AbstractString) = something(tryparse(s, Float64), missing)
 parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
 
-parse_int(s) = something(mytryparse(s, Int), missing)
+parse_int(s) = something(tryparse(s, Int), missing)
 parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 
 """
@@ -32,10 +25,10 @@ macro parsers_str(s)
     parser_dict = Dict("i" => parse_int, "f" => parse_float64, "s" => parse_string)
     sep = ':'
     parsers = []
-    for spec in mysplit(s)
+    for spec ∈ mysplit(s)
         if occursin(sep, spec)
             T, L = mysplit(spec, delimiter = sep)     # f:10 => means 10 floats
-            N = mytryparse(L, Int)
+            N = tryparse(L, Int)
             !haskey(parser_dict, T) && error("Invalid parser spec: $spec (unknown parser '$T')")
             (N == nothing || N <= 0) && error("Invalid parser spec: $spec (bad length '$N')")
             parsers = vcat(parsers, fill(parser_dict[T], N))
@@ -88,7 +81,8 @@ function peek_csv(filename; headers = true, nrows = 5, delimiter = ',')
     open(filename) do f
         headers = read_headers(f, headers, delimiter)
         rows = read_first_few_lines(f, nrows)
-        ncols = maximum(length(x) for x in [mysplit(row, delimiter = delimiter) for row in rows])
+        column_names = [mysplit(row, delimiter = delimiter) for row ∈ rows]
+        ncols = maximum(length(x) for x ∈ column_names)
         @info "Peeking into first few rows => there are $ncols columns" rows
     end
     nothing
@@ -97,7 +91,7 @@ end
 # Warning: type piracy!
 function grow_dataframe!(df::AbstractDataFrame, rows::Integer)
     rows <= nrow(df) && error("Current data frame has $(nrow(df)) rows but you specified to grow to $rows rows!")
-    for c in names(df)
+    for c ∈ names(df)
         df[c] = resize!(df[c], rows)
     end
     nothing
@@ -119,7 +113,7 @@ function make_dataframe(hdr, types, rows)
     # @info "Types = $types"
     # @info "Types[11] = $(types[11])"
     hdr = something(hdr, ["_$i" for i ∈ 1:length(types)])
-    cols = [Vector{T}(undef, rows) for T in types]
+    cols = [Vector{T}(undef, rows) for T ∈ types]
     df = DataFrame(cols, Symbol.(hdr), makeunique = true)
     #@show df
     df
@@ -149,7 +143,7 @@ end
 
 function infer_parsers_old(filename, headers, delimiter, quotechar)
     sample_lines = get_sample_lines(filename, headers = headers)
-    for line in sample_lines
+    for line ∈ sample_lines
         cells = mysplit(line, delimiter = delimiter, quotechar = quotechar)
         return infer_parser.(cells)  # TODO look beyond first line
     end
@@ -227,7 +221,7 @@ function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::
     within_quote = false
     last_index = 1
     values = String[]
-    for (i, c) in enumerate(str)
+    for (i, c) ∈ enumerate(str)
         if c == quotechar && !within_quote
             within_quote = true
             continue
@@ -244,7 +238,7 @@ function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::
     if last_index <= length(str) || str[end] == delimiter
         push!(values, str[last_index:end])
     end
-    strip_quotes ? [strip(x, [quotechar, ' ']) for x in values] : values
+    strip_quotes ? [strip(x, [quotechar, ' ']) for x ∈ values] : values
 end
 
 end # module
