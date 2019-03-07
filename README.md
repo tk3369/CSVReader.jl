@@ -1,6 +1,6 @@
 # CSVReader
 
-This is a very simple CSV reader that performs well for small/medium files.
+This is a very simple CSV reader that performs well for small/medium-sized files.
 It does not have any bells and whistles.  It should work fine if the file
 is well formatted and free of errors.
 
@@ -75,7 +75,6 @@ julia> describe(df)
 ## To-Do
 
 - [x] Handle quoted numeric cells that contains comma separator
-
+- [x] Add unit tests
 - [ ] Infer column types by reading more rows 
 
-- [ ] Add unit tests
