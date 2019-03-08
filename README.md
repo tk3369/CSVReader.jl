@@ -80,6 +80,7 @@ julia> describe(df)
 
 - [x] Handle quoted numeric cells that contains comma separator
 - [x] Add unit tests
-- [ ] Infer column types by reading more rows 
+- [ ] Support reading data into vector of named tuples and implement Tables.jl
 - [ ] Multi-threading for reading large files
+- [ ] Infer column types by reading more rows
 
