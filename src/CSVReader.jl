@@ -209,28 +209,10 @@ function read_first_few_lines(f, lines_to_read)
     lines
 end
 
-function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip_quotes = true)
-    within_quote = false
-    last_index = 1
-    values = String[]
-    for (i, c) ∈ enumerate(str)
-        if c == quotechar && !within_quote
-            within_quote = true
-            continue
-        end
-        if c == quotechar && within_quote
-            within_quote = false
-            continue
-        end
-        if c == delimiter && !within_quote
-            push!(values, str[last_index:i-1])
-            last_index = i + 1
-        end
-    end
-    if last_index <= length(str) || str[end] == delimiter
-        push!(values, str[last_index:end])
-    end
-    strip_quotes ? [strip(x, [quotechar, ' ']) for x ∈ values] : values
+function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip_quotes = true) 
+    stripfunc(x) = x[1] == quotechar && x[end] == quotechar ? x[2:end-1] : x
+    f = strip_quotes ? stripfunc : identity
+    map(f, split(str, delimiter))
 end
 
 end # module
