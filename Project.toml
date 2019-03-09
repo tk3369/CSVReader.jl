@@ -10,8 +10,6 @@ Parsers = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 
 [compat]
 Parsers = "^0.2.5"
-DataFrames = "^0"
-InternedStrings = "^0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
