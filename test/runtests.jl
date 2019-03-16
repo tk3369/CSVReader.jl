@@ -1,9 +1,9 @@
-using Test
+using BenchmarkTools
 using CSVReader
 using DataFrames
 using Dates
-using BenchmarkTools
 using Random
+using Test
 
 const iris = "iris.csv"
 
