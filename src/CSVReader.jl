@@ -13,10 +13,10 @@ faststrip(x, quotechar) = length(x) > 2 ? (x[1] == x[end] == quotechar ? x[2:end
 parse_string(s) = intern(s)
 parser_return_type(::Val{parse_string}) = Union{String, Missing}
 
-parse_float64(s) = something(tryparse(s, Float64), missing)
+parse_float64(s) = something(tryparse(Float64, s), missing)
 parser_return_type(::Val{parse_float64}) = Union{Float64, Missing}
 
-parse_int(s) = something(tryparse(s, Int), missing)
+parse_int(s) = something(tryparse(Int, s), missing)
 parser_return_type(::Val{parse_int}) = Union{Int, Missing}
 
 """
@@ -31,7 +31,7 @@ macro parsers_str(s)
     for spec ∈ split(s, ",")
         if occursin(sep, spec)
             T, L = split(spec, sep)     # f:10 => means 10 floats
-            N = tryparse(L, Int)
+            N = tryparse(Int, L)
             !haskey(parser_dict, T) && error("Invalid parser spec: $spec (unknown parser '$T')")
             (N == nothing || N <= 0) && error("Invalid parser spec: $spec (bad length '$N')")
             parsers = vcat(parsers, fill(parser_dict[T], N))
