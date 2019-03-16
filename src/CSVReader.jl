@@ -134,7 +134,7 @@ function infer_parsers(filename, headers, delimiter, quotechar)
     open(filename) do f
         headers && readline(f)
         first_line = readline(f)
-        cells = split(first_line, delimiter)
+        cells = map(x -> faststrip(x, quotechar), split(first_line, delimiter))
         infer_parser.(cells) 
     end
 end
