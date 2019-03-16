@@ -45,9 +45,14 @@ macro parsers_str(s)
 end
 
 """
-Read CSV file
+    Read CSV file
+
+Read a CSV formatted file as specified by `filename`.  If `parsers` is not specified
+then it is inferred from the first line.  Use `headers` keyword parameter to control
+whether a header line is present for column names.
 """
-function read_csv(filename, parsers = nothing;
+# DataFrame approach but have a parsing state machine
+function read_csv(filename, parsers = nothing; 
                     headers = true, 
                     delimiter = ',', 
                     quotechar = '"')  
@@ -58,7 +63,7 @@ function read_csv(filename, parsers = nothing;
         r = 0
         preallocate_rows = est_lines
         df = make_dataframe(hdr, parser_return_type.(Val.(parsers)), preallocate_rows)
-        while !eof(f)
+        @inbounds while !eof(f)
             line = readline(f)
             r += 1
             if r > preallocate_rows
@@ -67,7 +72,29 @@ function read_csv(filename, parsers = nothing;
                 grow_dataframe!(df, new_size)
                 preallocate_rows = new_size
             end 
-            parse_line!(df, r, parsers, line, delimiter, quotechar)
+            # This state machine keeps track of two indices (i,j).
+            # The value of `j` is incremented until it hits a delimiter or end of string.
+            # The value of `k` is then determined as `j-1` if line[j] is a delimiter,
+            # else `k` would have the same index as `end` of line.
+            # The cell is then consumed i.e. stripped, parsed, and set.
+            # Reference: i = start, j = pointer, k = end, c = column index
+            len = length(line)
+            i = j = c = 1
+            within_quote = false
+            while i <= len && j <= len
+                if line[j] == quotechar
+                    within_quote = !within_quote
+                end
+                if (!within_quote && line[j] == delimiter) || j == len
+                    k = (j == len) ? len : j-1  # special case at end of line
+                    df[r, c] = faststrip(line[i:k], quotechar) |> parsers[c]
+                    c += 1
+                    i = j = j+1
+                else
+                    j += 1
+                end
+            end
+            # parse_line!(df, r, parsers, line, delimiter, quotechar)
         end
         trim_table(df, r)
     end
@@ -210,51 +237,6 @@ end
 # -------------------
 # Experimental stuffs
 # -------------------
-
-# DataFrame approach but have a parsing state machine
-function read_csv2(filename, parsers = nothing; 
-                    headers = true, 
-                    delimiter = ',', 
-                    quotechar = '"')  
-    parsers = something(parsers, infer_parsers(filename, headers, delimiter, quotechar))
-    est_lines = estimate_lines_in_file(filename, with_headers = headers)
-    open(filename) do f
-        hdr = read_headers(f, headers, delimiter, quotechar)
-        r = 0
-        preallocate_rows = est_lines
-        df = make_dataframe(hdr, parser_return_type.(Val.(parsers)), preallocate_rows)
-        @inbounds while !eof(f)
-            line = readline(f)
-            r += 1
-            if r > preallocate_rows
-                new_size = max(floor(Int, preallocate_rows * 1.05 + 5), preallocate_rows + 5)
-                @debug "Growing data frame from $preallocate_rows rows to $new_size"
-                grow_dataframe!(df, new_size)
-                preallocate_rows = new_size
-            end 
-            # This state machine keeps track of two indices (i,j).
-            # The value of `j` is incremented until it hits a delimiter or end of string.
-            # The value of `k` is then determined as `j-1` if line[j] is a delimiter,
-            # else `k` would have the same index as `end` of line.
-            # The cell is then consumed i.e. stripped, parsed, and set.
-            # Reference: i = start, j = pointer, k = end, c = column index
-            len = length(line)
-            i = j = c = 1
-            while i <= len && j <= len
-                if line[j] == delimiter || j == len
-                    k = (j == len) ? len : j-1  # special case at end of line
-                    df[r, c] = faststrip(line[i:k], quotechar) |> parsers[c]
-                    c += 1
-                    i = j = j+1
-                else
-                    j += 1
-                end
-            end
-            # parse_line!(df, r, parsers, line, delimiter, quotechar)
-        end
-        trim_table(df, r)
-    end
-end
 
 # Return vector of named tuples
 function read_csv_nt(filename, parsers = nothing; 
