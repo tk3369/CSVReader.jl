@@ -32,7 +32,7 @@ end
 @testset "CSVReader" begin
 
     # readers available for testing
-    readers = [CSVReader.read_csv, CSVReader.read_csv2]
+    readers = [CSVReader.read_csv]
 
     for reader in readers
         # basic usage
