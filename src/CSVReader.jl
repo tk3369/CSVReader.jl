@@ -26,11 +26,11 @@ s:10,f:2,i:5 means 10 strings, 2 floats, and 5 int's.
 """
 macro parsers_str(s) 
     parser_dict = Dict("i" => parse_int, "f" => parse_float64, "s" => parse_string)
-    sep = ':'
     parsers = []
-    for spec ∈ mysplit(s)
+    sep = ":"
+    for spec ∈ split(s, ",")
         if occursin(sep, spec)
-            T, L = mysplit(spec, delimiter = sep)     # f:10 => means 10 floats
+            T, L = split(spec, sep)     # f:10 => means 10 floats
             N = tryparse(L, Int)
             !haskey(parser_dict, T) && error("Invalid parser spec: $spec (unknown parser '$T')")
             (N == nothing || N <= 0) && error("Invalid parser spec: $spec (bad length '$N')")
@@ -80,7 +80,7 @@ function peek_csv(filename; headers = true, nrows = 5, delimiter = ',', quotecha
     open(filename) do f
         headers = read_headers(f, headers, delimiter, quotechar)
         rows = read_first_few_lines(f, nrows)
-        column_names = [mysplit(row, delimiter = delimiter) for row ∈ rows]
+        column_names = [split(row, delimiter) for row ∈ rows]
         ncols = maximum(length(x) for x ∈ column_names)
         @info "Peeking into first few rows => there are $ncols columns" rows
     end
@@ -97,7 +97,7 @@ function grow_dataframe!(df::AbstractDataFrame, rows::Integer)
 end
 
 function parse_line!(df, row, parsers, line, delimiter, quotechar)
-    strings = mysplit(line, delimiter = delimiter, quotechar = quotechar)
+    strings = split(line, delimiter)
     for (i, parser) ∈ enumerate(parsers)
         parsed_value = faststrip(strings[i], quotechar) |> parser
         #@debug "Parsed line" row i parsed_value
@@ -124,7 +124,7 @@ end
 
 function read_headers(f, headers, delimiter, quotechar)
     if headers
-        map(h -> faststrip(h, quotechar), mysplit(readline(f), delimiter = delimiter))
+        map(h -> faststrip(h, quotechar), split(readline(f), delimiter))
     else
         nothing
     end
@@ -134,7 +134,7 @@ function infer_parsers(filename, headers, delimiter, quotechar)
     open(filename) do f
         headers && readline(f)
         first_line = readline(f)
-        cells = mysplit(first_line, delimiter = delimiter, quotechar = quotechar)
+        cells = split(first_line, delimiter)
         infer_parser.(cells) 
     end
 end
@@ -207,10 +207,6 @@ function read_first_few_lines(f, lines_to_read)
     lines
 end
 
-function mysplit(str::AbstractString; delimiter::AbstractChar = ',', quotechar::AbstractChar = '"', strip_quotes = true) 
-    split(str, delimiter)
-end
-
 # -------------------
 # Experimental stuffs
 # -------------------
@@ -279,7 +275,7 @@ function read_csv_nt(filename, parsers = nothing;
         while !eof(f)
             line = readline(f)
             r += 1
-            s = mysplit(line, delimiter = delimiter, quotechar = quotechar)
+            s = split(line, delimiter)
             @inbounds for i in 1:ncol
                 v[i] = faststrip(s[i], quotechar) |> parsers[i]
             end
