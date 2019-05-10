@@ -9,7 +9,7 @@ InternedStrings = "7d512f48-7fb1-5a58-b986-67e6dc259f01"
 Parsers = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 
 [compat]
-Parsers = "^0.2.20"
+Parsers = "^0.2.20, ^0.3"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
