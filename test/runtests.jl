@@ -10,8 +10,8 @@ const iris = "iris.csv"
 function testiris(df)
     @test size(df) == (150, 6)
     @test names(df) == Symbol.(["id", "Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species"])
-    @test unique(df[:Species]) == ["setosa", "versicolor", "virginica"]
-    @test [sum(df[i]) for i in 2:5] ≈ [876.5, 458.6, 563.7, 179.9]
+    @test unique(df[!, :Species]) == ["setosa", "versicolor", "virginica"]
+    @test [sum(df[!, i]) for i in 2:5] ≈ [876.5, 458.6, 563.7, 179.9]
 end
 
 function genperf(rows, nfloat, nstr, strsize, nqfloat, nqstr, qstrsize)
@@ -45,21 +45,21 @@ end
 
         # without headers
         df = reader("iris2.csv"; headers = false) 
-        names!(df, Symbol.(["id", "Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species"]))
+        rename!(df, Symbol.(["id", "Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species"]))
         testiris(df)
 
         # missing data (1st row ok)
         df = reader("missing1.csv") 
-        @test sum(count(ismissing, df[c]) for c in 1:ncol(df)) == 5
+        @test sum(count(ismissing, df[!,c]) for c in 1:ncol(df)) == 5
 
         # missing  data (1st row contains missing, causing column to have type String)
         df = reader("missing2.csv") 
-        @test sum(count(ismissing, df[c]) for c in 1:ncol(df)) == 3
+        @test sum(count(ismissing, df[!,c]) for c in 1:ncol(df)) == 3
 
         # missing  data (1st row contains missing, causing column to have type String)
         # but, this is corrected via parsers spec
         df = reader("missing2.csv", parsers"i:4")
-        @test sum(count(ismissing, df[c]) for c in 1:ncol(df)) == 5
+        @test sum(count(ismissing, df[!,c]) for c in 1:ncol(df)) == 5
     end
 
     # Performance test - generate test files.
