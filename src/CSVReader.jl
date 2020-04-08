@@ -168,11 +168,11 @@ end
 
 # infer parser needed from a string
 function infer_parser(s)
-    if match(r"^\d+\.\d*$", s) != nothing ||      # covers 12.
-            match(r"^\d*\.\d+$", s)!= nothing ||  # covers .12
-            match(r"^\d+\.\d*e[+-]\d$", s) != nothing
+    if match(r"^-?\d+\.\d*$", s) != nothing ||      # covers 12.
+            match(r"^-?\d*\.\d+$", s)!= nothing ||  # covers .12
+            match(r"^-?\d+\.\d*e[+-]\d$", s) != nothing
         parse_float64
-    elseif match(r"^\d+$", s) != nothing          # covers 123
+    elseif match(r"^-?\d+$", s) != nothing          # covers 123
         parse_int
     else
         parse_string
