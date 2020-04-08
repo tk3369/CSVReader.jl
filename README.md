@@ -15,7 +15,7 @@ Requires Julia 1.0.
 
 ## Installation
 
-`] add https://github.com/tk3369/CSVReader.jl`
+`] add CSVReader`
 
 ## Manual
 
