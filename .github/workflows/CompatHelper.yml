@@ -1,8 +1,9 @@
 name: CompatHelper
 
 on:
+  create:
   schedule:
-    - cron: '1 * * * *'
+    - cron: '1 1 * * *'
   pull_request:
     branches:
     - master
