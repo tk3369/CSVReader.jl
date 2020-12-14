@@ -1,8 +1,11 @@
 # CSVReader
 
-[![Build Status](https://travis-ci.org/tk3369/CSVReader.jl.svg?branch=master)](https://travis-ci.org/tk3369/CSVReader.jl)
+[![Build Status](https://github.com/tk3369/CSVReader.jl/workflows/CI/badge.svg)](https://github.com/tk3369/CSVReader.jl/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/tk3369/CSVReader.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tk3369/CSVReader.jl)
 [![Coverage Status](https://coveralls.io/repos/github/tk3369/CSVReader.jl/badge.svg?branch=master)](https://coveralls.io/github/tk3369/CSVReader.jl?branch=master)
+
+**This package is not maintained anyore. Check out the CSV.jl project
+which has state-of-the-art performance now.**
 
 This is a simple CSV reader that performs well and is easy to use.
 It does not have any bells and whistles.
